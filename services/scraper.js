@@ -1,4 +1,3 @@
-
 import { chromium } from "playwright";
 
 export default async function fetchAttendance(regno, password) {
@@ -26,8 +25,9 @@ export default async function fetchAttendance(regno, password) {
 
       // Step 4: Wait and click student dashboard
       console.log("📚 Clicking on Student Dashboard...");
-      await page.waitForSelector("a[href*='StudentHome.aspx']", { timeout: 10000 });
-      await page.getByRole("link", { name: /click here to go student/i }).click();
+      await page.getByRole("link", { name: "Click Here to go Student" }).click();
+      // await page.waitForSelector("a[href*='StudentHome.aspx']", { timeout: 10000 });
+      // await page.getByRole("link", { name: /click here to go student/i }).click();
 
       // Step 5: Fetch attendance
       console.log("📊 Fetching attendance...");
