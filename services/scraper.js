@@ -1,3 +1,6 @@
+
+import { chromium } from "playwright";
+
 export default async function fetchAttendance(regno, password) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     let browser = null;
