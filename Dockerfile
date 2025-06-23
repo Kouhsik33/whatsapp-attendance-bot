@@ -1,15 +1,18 @@
-# Use official Playwright base image with all browsers
-FROM mcr.microsoft.com/playwright:v1.43.1-jammy
+# ✅ Use updated Playwright image with v1.53.1
+FROM mcr.microsoft.com/playwright:v1.53.1-jammy
 
 # Create app directory
 WORKDIR /app
 
-# Install app dependencies
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy app source
+# Copy the rest of your app
 COPY . .
 
-# Start your server (adjust if your entry point is different)
+# Expose port (optional, useful if testing locally)
+EXPOSE 10000
+
+# Start your server
 CMD ["node", "index.js"]
