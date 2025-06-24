@@ -2,7 +2,6 @@ import express from 'express';
 import twilio from 'twilio';
 import User from '../models/user.js';
 import fetchAttendance from '../services/scraper.js';
-import { sendMessage } from '../utils/responder.js'; // Ensure this is ES module
 
 const MessagingResponse = twilio.twiml.MessagingResponse;
 const router = express.Router();
@@ -64,13 +63,14 @@ router.post('/', async (req, res) => {
       console.log("🔄 Fetching attendance for:", user.regno);
       const result = await fetchAttendance(user.regno, user.password);
       console.log("📊 Attendance fetched:", result);
-      await sendMessage(`whatsapp:${phone}`, result || "❌ Could not fetch your attendance.");
+      twiml.message(result || "❌ Could not fetch your attendance.");
     } catch (err) {
       console.error("💥 Attendance fetch error:", err.message);
-      await sendMessage(`whatsapp:${phone}`, "⚠️ Failed to fetch attendance due to an error.");
+      twiml.message("⚠️ Failed to fetch attendance due to an error.");
     }
 
-    return res.status(200).end(); // ✅ prevent double response
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    return res.end(twiml.toString());
   }
 
   // === UNKNOWN COMMAND ===
