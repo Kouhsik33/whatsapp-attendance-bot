@@ -4,7 +4,7 @@ import twilio from 'twilio';
 // const MessagingResponse = twilio.twiml.MessagingResponse;
 import User from '../models/user.js';
 import fetchAttendance from '../services/scraper.js';
-import { sendMessage } from '../utils/responder.js';
+// import { sendMessage } from '../utils/responder.js';
 
 
 const MessagingResponse = twilio.twiml.MessagingResponse;
