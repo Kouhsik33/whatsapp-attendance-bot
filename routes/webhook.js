@@ -1,14 +1,10 @@
-// routes/webhook.js
 import express from 'express';
 import twilio from 'twilio';
-// const MessagingResponse = twilio.twiml.MessagingResponse;
 import User from '../models/user.js';
 import fetchAttendance from '../services/scraper.js';
-// import { sendMessage } from '../utils/responder.js';
-
+import { sendMessage } from '../utils/responder.js'; // Ensure this is ES module
 
 const MessagingResponse = twilio.twiml.MessagingResponse;
-
 const router = express.Router();
 
 router.post('/', async (req, res) => {
@@ -23,19 +19,20 @@ router.post('/', async (req, res) => {
   const twiml = new MessagingResponse();
 
   if (!incomingMsg || !phone) {
-    console.warn("⚠️ Invalid message or missing phone");
     twiml.message('❌ Invalid request. Please send a valid message.');
-    return res.type('text/xml').send(twiml.toString());
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    return res.end(twiml.toString());
   }
 
+  // === REGISTER ===
   if (incomingMsg.startsWith("REGISTER")) {
     console.log("📌 REGISTER command received");
     const [, regno, password] = rawMsg.trim().split(" ");
 
     if (!regno || !password) {
-      console.warn("⚠️ Missing regno or password");
       twiml.message("❌ Usage: REGISTER <regno> <password>");
-      return res.type('text/xml').send(twiml.toString());
+      res.writeHead(200, { 'Content-Type': 'text/xml' });
+      return res.end(twiml.toString());
     }
 
     await User.findOneAndUpdate(
@@ -46,37 +43,41 @@ router.post('/', async (req, res) => {
 
     console.log(`✅ Registered user ${regno}`);
     twiml.message("✅ Registered successfully! Send ATTENDANCE to get your stats.");
-    return res.type('text/xml').send(twiml.toString());
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    return res.end(twiml.toString());
   }
 
+  // === ATTENDANCE ===
   if (incomingMsg === "ATTENDANCE") {
     console.log("📌 ATTENDANCE command received");
 
     const user = await User.findOne({ phone });
+
     if (!user) {
       console.warn("❌ No user found for phone:", phone);
       twiml.message("❌ You are not registered. Send:\nREGISTER <regno> <password>");
-      return res.type('text/xml').send(twiml.toString());
+      res.writeHead(200, { 'Content-Type': 'text/xml' });
+      return res.end(twiml.toString());
     }
 
     try {
       console.log("🔄 Fetching attendance for:", user.regno);
       const result = await fetchAttendance(user.regno, user.password);
       console.log("📊 Attendance fetched:", result);
-      twiml.message(result || "❌ Could not fetch your attendance.");
+      await sendMessage(`whatsapp:${phone}`, result || "❌ Could not fetch your attendance.");
     } catch (err) {
       console.error("💥 Attendance fetch error:", err.message);
-      twiml.message("⚠️ Failed to fetch attendance due to an error.");
+      await sendMessage(`whatsapp:${phone}`, "⚠️ Failed to fetch attendance due to an error.");
     }
 
-    res.writeHead(200, { 'Content-Type': 'text/xml' });
-  res.end(twiml.toString());
-
+    return res.status(200).end(); // ✅ prevent double response
   }
 
+  // === UNKNOWN COMMAND ===
   console.log("❓ Unrecognized command:", incomingMsg);
   twiml.message("🤖 Available Commands:\n- REGISTER <regno> <password>\n- ATTENDANCE");
-  res.type('text/xml').send(twiml.toString());
+  res.writeHead(200, { 'Content-Type': 'text/xml' });
+  return res.end(twiml.toString());
 });
 
 export default router;
