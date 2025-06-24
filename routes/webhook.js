@@ -4,6 +4,8 @@ import twilio from 'twilio';
 // const MessagingResponse = twilio.twiml.MessagingResponse;
 import User from '../models/user.js';
 import fetchAttendance from '../services/scraper.js';
+import { sendMessage } from '../utils/responder.js';
+
 
 const MessagingResponse = twilio.twiml.MessagingResponse;
 
@@ -67,7 +69,9 @@ router.post('/', async (req, res) => {
       twiml.message("⚠️ Failed to fetch attendance due to an error.");
     }
 
-    return res.type('text/xml').send(twiml.toString());
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+  res.end(twiml.toString());
+
   }
 
   console.log("❓ Unrecognized command:", incomingMsg);
